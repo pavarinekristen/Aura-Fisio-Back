@@ -15,7 +15,7 @@ export const professionalResult = z.object({ message: z.string().min(1), action:
   z.object({ type: z.literal('none'), data: z.object({}) }),
   z.object({ type: z.literal('new_patient'), data: z.object({ full_name: z.string(), phone: z.string().optional(), chief_complaint: z.string().optional() }) }),
   z.object({ type: z.literal('schedule_appointment'), data: z.object({ patient_name: z.string(), patient_id: z.string().uuid().nullable().optional(), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), time: z.string().regex(/^\d{2}:\d{2}$/), duration_minutes: z.number().int().min(1).max(480), title: z.string() }) }),
-]) });
+]).default({ type: 'none', data: {} }) });
 export const protocolResult = z.object({ phases: z.array(z.object({ name: z.string(), duration_weeks: z.number().positive(), frequency: z.string(), objectives: z.string(), exercises: z.array(z.object({ name: z.string(), description: z.string(), sets: z.string(), reps: z.string(), notes: z.string() })).max(20) })).min(1).max(10) });
 export const careResult = z.object({ notifications: z.array(z.object({ type: z.string().max(50), title: z.string().min(1).max(300), message: z.string().min(1).max(20000) })).max(5) });
 

@@ -37,7 +37,7 @@ export class AiService {
     if (!input.message) throw new BadRequestException('Informe a mensagem.');
     const patients = await this.db.profile.findMany({ where: { user: { role: 'patient' } }, select: { user_id: true, full_name: true }, take: 500 });
     const prompt = `${rules}\nVocê é a assistente executiva da clínica. Hoje: ${new Date().toISOString()}. Pacientes: ${JSON.stringify(patients)}.
-Retorne apenas JSON {"message":"Resposta amigável", "action":{"type":"none","data":{}}}.
+Retorne apenas JSON no formato {"message":"...","action":{"type":"none","data":{}}}. O campo "message" deve conter sua resposta real ao profissional, em português, nunca um texto de exemplo.
 Quando solicitado cadastro, type="new_patient", data={"full_name":"...","phone":"...","chief_complaint":"..."}.
 Para agendar, type="schedule_appointment", data={"patient_name":"...","patient_id":null,"date":"YYYY-MM-DD","time":"HH:MM","duration_minutes":60,"title":"Sessão na Clínica"}. Use o UUID da lista se reconhecer o paciente. Sugira 09:00 para manhã, 14:00 para tarde e 18:00 para noite. Peça detalhes quando faltarem dados. Nenhuma ação foi executada: o profissional precisa confirmar na interface.`;
     const text = await this.provider.text([{ role: 'system', content: prompt }, ...(input.history ?? []).slice(-6), { role: 'user', content: input.message }], true);
