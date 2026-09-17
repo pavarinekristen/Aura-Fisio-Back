@@ -1,0 +1,25 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+coverage
+
+# Generated
+openapi.json
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Local env
+.env
+.env.*
+!.env.example
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store

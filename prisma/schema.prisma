@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  professional
+  patient
+}
+
+enum EventType {
+  clinic
+  home
+  rest
+}
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @unique
+  password_hash String
+  role          Role     @default(patient)
+  created_at    DateTime @default(now()) @db.Timestamptz
+  updated_at    DateTime @updatedAt @db.Timestamptz
+  profile       Profile?
+  intake        PatientIntake?
+  auth_sessions AuthSession[]
+  plans         TreatmentPlan[] @relation("patient_plans")
+  prescribed    TreatmentPlan[] @relation("professional_plans")
+  sessions      ClinicalSession[] @relation("patient_sessions")
+  conducted     ClinicalSession[] @relation("professional_sessions")
+  metrics       ClinicalMetric[] @relation("patient_metrics")
+  measured      ClinicalMetric[] @relation("professional_metrics")
+  checkins      WorkoutCheckin[]
+  alerts        PatientAlert[] @relation("patient_alerts")
+  received_alerts PatientAlert[] @relation("professional_alerts")
+  templates     ProtocolTemplate[]
+  notifications PatientNotification[]
+  events        CalendarEvent[] @relation("patient_events")
+  scheduled     CalendarEvent[] @relation("professional_events")
+  @@map("users")
+}
+
+model AuthSession {
+  id         String   @id @default(uuid()) @db.Uuid
+  token_hash String   @unique
+  user_id    String   @db.Uuid
+  expires_at DateTime @db.Timestamptz
+  created_at DateTime @default(now()) @db.Timestamptz
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  @@index([expires_at])
+  @@map("auth_sessions")
+}
+
+model Profile {
+  id               String   @id @default(uuid()) @db.Uuid
+  user_id          String   @unique @db.Uuid
+  full_name        String   @default("")
+  avatar_url       String?
+  phone            String?
+  date_of_birth    DateTime? @db.Date
+  intake_completed Boolean  @default(false)
+  created_at       DateTime @default(now()) @db.Timestamptz
+  updated_at       DateTime @updatedAt @db.Timestamptz
+  user             User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  @@map("profiles")
+}
+
+model PatientIntake {
+  id                  String @id @default(uuid()) @db.Uuid
+  user_id             String @unique @db.Uuid
+  chief_complaint      String?
+  pain_location       String?
+  pain_intensity      Int? @default(0)
+  pain_duration       String?
+  pain_type           String?
+  previous_treatments  String?
+  surgeries           String?
+  medications         String?
+  medical_conditions  String?
+  daily_activities    String?
+  exercise_routine    String?
+  goals               String?
+  sleep_quality       String?
+  stress_level        String?
+  additional_notes    String?
+  treatment_protocol  String?
+  treatment_duration  String?
+  intake_completed    Boolean @default(false)
+  is_deleted          Boolean @default(false)
+  deleted_at          DateTime? @db.Timestamptz
+  created_at          DateTime @default(now()) @db.Timestamptz
+  updated_at          DateTime @updatedAt @db.Timestamptz
+  user                User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  @@map("patient_intake")
+}
+
+model TreatmentPlan {
+  id                   String @id @default(uuid()) @db.Uuid
+  patient_id           String @db.Uuid
+  professional_id      String @db.Uuid
+  exercise_name        String
+  exercise_description String?
+  sets                 String?
+  reps                 String?
+  frequency            String?
+  day_of_week          String?
+  notes                String?
+  is_active            Boolean @default(true)
+  is_deleted           Boolean @default(false)
+  deleted_at           DateTime? @db.Timestamptz
+  created_at           DateTime @default(now()) @db.Timestamptz
+  updated_at           DateTime @updatedAt @db.Timestamptz
+  patient              User @relation("patient_plans", fields: [patient_id], references: [id])
+  professional         User @relation("professional_plans", fields: [professional_id], references: [id])
+  checkins             WorkoutCheckin[]
+  @@index([patient_id, is_deleted])
+  @@map("treatment_plans")
+}
+
+model ClinicalSession {
+  id                 String @id @default(uuid()) @db.Uuid
+  patient_id         String @db.Uuid
+  professional_id    String @db.Uuid
+  session_date       DateTime @default(now()) @db.Date
+  session_number     Int @default(1)
+  pain_level         Int?
+  improvements       String?
+  adaptations        String?
+  observations       String?
+  next_session_goals String?
+  is_deleted         Boolean @default(false)
+  deleted_at         DateTime? @db.Timestamptz
+  created_at         DateTime @default(now()) @db.Timestamptz
+  updated_at         DateTime @updatedAt @db.Timestamptz
+  patient            User @relation("patient_sessions", fields: [patient_id], references: [id])
+  professional       User @relation("professional_sessions", fields: [professional_id], references: [id])
+  metrics            ClinicalMetric[]
+  @@index([patient_id, session_date])
+  @@map("clinical_sessions")
+}
+
+model ClinicalMetric {
+  id              String @id @default(uuid()) @db.Uuid
+  patient_id      String @db.Uuid
+  professional_id String @db.Uuid
+  session_id      String? @db.Uuid
+  metric_type     String
+  metric_name     String
+  metric_value    Decimal
+  metric_unit     String?
+  notes           String?
+  is_deleted      Boolean @default(false)
+  deleted_at      DateTime? @db.Timestamptz
+  created_at      DateTime @default(now()) @db.Timestamptz
+  patient         User @relation("patient_metrics", fields: [patient_id], references: [id])
+  professional    User @relation("professional_metrics", fields: [professional_id], references: [id])
+  session         ClinicalSession? @relation(fields: [session_id], references: [id])
+  @@index([patient_id, created_at])
+  @@map("clinical_metrics")
+}
+
+model WorkoutCheckin {
+  id                String @id @default(uuid()) @db.Uuid
+  patient_id        String @db.Uuid
+  treatment_plan_id String @db.Uuid
+  checked_at        DateTime @default(now()) @db.Timestamptz
+  pain_reported     Int?
+  notes             String?
+  created_at        DateTime @default(now()) @db.Timestamptz
+  patient           User @relation(fields: [patient_id], references: [id])
+  plan              TreatmentPlan @relation(fields: [treatment_plan_id], references: [id])
+  @@index([patient_id, checked_at])
+  @@map("workout_checkins")
+}
+
+model PatientAlert {
+  id              String @id @default(uuid()) @db.Uuid
+  patient_id      String @db.Uuid
+  professional_id String? @db.Uuid
+  alert_type      String @default("pain_regression")
+  message         String
+  is_read         Boolean @default(false)
+  created_at      DateTime @default(now()) @db.Timestamptz
+  patient         User @relation("patient_alerts", fields: [patient_id], references: [id])
+  professional    User? @relation("professional_alerts", fields: [professional_id], references: [id])
+  @@index([is_read, created_at])
+  @@map("patient_alerts")
+}
+
+model ProtocolTemplate {
+  id              String @id @default(uuid()) @db.Uuid
+  professional_id String @db.Uuid
+  template_name   String
+  description     String?
+  exercises       Json @default("[]")
+  clinical_data   Json?
+  created_at      DateTime @default(now()) @db.Timestamptz
+  updated_at      DateTime @updatedAt @db.Timestamptz
+  professional    User @relation(fields: [professional_id], references: [id])
+  @@index([professional_id])
+  @@map("protocol_templates")
+}
+
+model PatientNotification {
+  id                String @id @default(uuid()) @db.Uuid
+  patient_id        String @db.Uuid
+  notification_type String @default("general")
+  title             String
+  message           String
+  is_read           Boolean @default(false)
+  is_dismissed      Boolean @default(false)
+  metadata          Json @default("{}")
+  created_at        DateTime @default(now()) @db.Timestamptz
+  patient           User @relation(fields: [patient_id], references: [id])
+  @@index([patient_id, created_at])
+  @@map("patient_notifications")
+}
+
+model CalendarEvent {
+  id              String @id @default(uuid()) @db.Uuid
+  patient_id      String @db.Uuid
+  professional_id String @db.Uuid
+  title           String
+  event_type      EventType
+  start_date      DateTime @db.Timestamptz
+  end_date        DateTime @db.Timestamptz
+  notes           String?
+  is_published    Boolean @default(false)
+  created_at      DateTime @default(now()) @db.Timestamptz
+  updated_at      DateTime @updatedAt @db.Timestamptz
+  patient         User @relation("patient_events", fields: [patient_id], references: [id])
+  professional    User @relation("professional_events", fields: [professional_id], references: [id])
+  @@index([patient_id, start_date])
+  @@index([professional_id])
+  @@map("calendar_events")
+}

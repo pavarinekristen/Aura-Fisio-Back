@@ -1,0 +1,49 @@
+{
+  "name": "@bio-hub/backend",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "node --watch -r ts-node/register src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "lint": "eslint src test prisma scripts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run test/unit.test.ts",
+    "test:integration": "node scripts/integration.mjs",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "api:types": "ts-node scripts/openapi.ts && openapi-typescript openapi.json -o ../frontend/src/types/api.generated.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/platform-express": "^11.1.6",
+    "@nestjs/swagger": "^11.2.0",
+    "@prisma/client": "6.19.0",
+    "argon2": "^0.44.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.0",
+    "@types/supertest": "^6.0.3",
+    "eslint": "^9.32.0",
+    "openapi-typescript": "^7.10.1",
+    "prisma": "6.19.0",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0",
+    "vitest": "^3.2.4"
+  }
+}
