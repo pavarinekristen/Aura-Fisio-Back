@@ -8,7 +8,7 @@
     "start": "node dist/main.js",
     "lint": "eslint src test prisma scripts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run test/unit.test.ts",
+    "test": "vitest run test/unit.test.ts test/extractors.test.ts",
     "test:integration": "node scripts/integration.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",

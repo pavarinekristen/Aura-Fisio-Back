@@ -29,14 +29,14 @@ export class AuthService {
     const token = randomBytes(32).toString('base64url');
     await this.db.authSession.deleteMany({ where: { expires_at: { lt: new Date() } } });
     await this.db.authSession.create({ data: { user_id: user.id, token_hash: digest(token), expires_at: new Date(now + SESSION_MAX_AGE) } });
-    return { token, user: { id: user.id, email: user.email, role: user.role, full_name: user.profile?.full_name ?? '' } };
+    return { token, user: { id: user.id, email: user.email ?? '', role: user.role, full_name: user.profile?.full_name ?? '' } };
   }
 
   async authenticate(token?: string): Promise<Principal> {
     if (!token || token.length > 100) throw new UnauthorizedException('Entre na sua conta.');
     const session = await this.db.authSession.findUnique({ where: { token_hash: digest(token) }, include: { user: { include: { profile: true } } } });
     if (!session || session.expires_at <= new Date()) throw new UnauthorizedException('Sessão expirada. Entre novamente.');
-    return { id: session.user.id, email: session.user.email, role: session.user.role, full_name: session.user.profile?.full_name ?? '' };
+    return { id: session.user.id, email: session.user.email ?? '', role: session.user.role, full_name: session.user.profile?.full_name ?? '' };
   }
 
   async logout(token?: string) {

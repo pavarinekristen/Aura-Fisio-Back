@@ -38,7 +38,8 @@ export class ResourceService {
     const query = this.filters(key, raw);
     return this.repo.list(key, { AND: [this.scope(key, actor), query.where] }, query.orderBy, query.take);
   }
-  private async prepare(key: ResourceKey, actor: Principal, raw: unknown, patch: boolean, tx: Prisma.TransactionClient, existing?: Row): Promise<Row> {
+  /** `protected` para que os executores da Aura herdem estas regras em vez de duplicá-las. */
+  protected async prepare(key: ResourceKey, actor: Principal, raw: unknown, patch: boolean, tx: Prisma.TransactionClient, existing?: Row): Promise<Row> {
     const cfg = configFor(key);
     if (!isStaff(actor) && !cfg.patientWrite) throw new ForbiddenException();
     if (key === 'patient_alerts') {

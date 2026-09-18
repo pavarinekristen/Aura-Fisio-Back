@@ -4,12 +4,14 @@ const imagePart = z.object({ type: z.literal('image_url'), image_url: z.object({
 export const messageSchema = z.object({ role: z.enum(['user', 'assistant']), content: z.union([z.string().max(30000), z.array(z.union([textPart, imagePart])).min(1).max(3)]) }).strict();
 export const aiInput = z.object({
   patient_id: z.string().uuid().optional(),
+  selected_region: z.object({ id: z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/), label: z.string().trim().min(1).max(100) }).strict().optional(),
+  selected_structure: z.object({ id: z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/), label: z.string().trim().min(1).max(100) }).strict().optional(),
   messages: z.array(messageSchema).min(1).max(80).optional(),
   mode: z.enum(['patient', 'professional', 'calendar']).optional(),
   message: z.string().trim().min(1).max(10000).optional(),
   history: z.array(messageSchema).max(20).optional(),
   prompt: z.string().max(20000).optional(),
-}).strict();
+}).strict().refine(input => !input.selected_structure || !!input.selected_region, { message: 'Uma estrutura requer a região selecionada.', path: ['selected_structure'] });
 export type AiInput = z.infer<typeof aiInput>;
 export const professionalResult = z.object({ message: z.string().min(1), action: z.discriminatedUnion('type', [
   z.object({ type: z.literal('none'), data: z.object({}) }),

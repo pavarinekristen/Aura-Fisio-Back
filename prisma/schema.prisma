@@ -21,8 +21,10 @@ enum EventType {
 
 model User {
   id            String   @id @default(uuid()) @db.Uuid
-  email         String   @unique
-  password_hash String
+  /// Nulo enquanto o paciente é apenas prontuário, sem acesso ao app.
+  email         String?  @unique
+  /// Nulo até o profissional convidar o paciente e gerar a senha temporária.
+  password_hash String?
   role          Role     @default(patient)
   created_at    DateTime @default(now()) @db.Timestamptz
   updated_at    DateTime @updatedAt @db.Timestamptz
@@ -42,6 +44,9 @@ model User {
   notifications PatientNotification[]
   events        CalendarEvent[] @relation("patient_events")
   scheduled     CalendarEvent[] @relation("professional_events")
+  clinic_setting ClinicSetting?
+  aura_plans    AuraActionPlan[] @relation("professional_plans_aura")
+  aura_targeted AuraActionPlan[] @relation("patient_plans_aura")
   @@map("users")
 }
 
@@ -62,6 +67,7 @@ model Profile {
   full_name        String   @default("")
   avatar_url       String?
   phone            String?
+  cpf              String?  @unique @db.VarChar(11)
   date_of_birth    DateTime? @db.Date
   intake_completed Boolean  @default(false)
   created_at       DateTime @default(now()) @db.Timestamptz
@@ -237,5 +243,62 @@ model CalendarEvent {
   professional    User @relation("professional_events", fields: [professional_id], references: [id])
   @@index([patient_id, start_date])
   @@index([professional_id])
+  @@index([professional_id, start_date])
   @@map("calendar_events")
+}
+
+enum AuraActionStatus {
+  pending
+  executed
+  cancelled
+  failed
+}
+
+/// Uma linha por ação da Aura: o que foi proposto, o que o profissional confirmou
+/// e o que foi gravado. Serve de auditoria e de trava de idempotência.
+model AuraActionPlan {
+  id               String   @id @default(uuid()) @db.Uuid
+  professional_id  String   @db.Uuid
+  patient_id       String?  @db.Uuid
+  type             String
+  status           AuraActionStatus @default(pending)
+  source_text      String
+  model            String
+  /// llm | keyword_fallback
+  intent_source    String   @default("llm")
+  extracted        Json     @default("{}")
+  payload          Json     @default("{}")
+  executed_payload Json?
+  edited_fields    String[]
+  result           Json?
+  error            String?
+  expires_at       DateTime @db.Timestamptz
+  executed_at      DateTime? @db.Timestamptz
+  created_at       DateTime @default(now()) @db.Timestamptz
+  updated_at       DateTime @updatedAt @db.Timestamptz
+  professional     User     @relation("professional_plans_aura", fields: [professional_id], references: [id], onDelete: Cascade)
+  patient          User?    @relation("patient_plans_aura", fields: [patient_id], references: [id], onDelete: SetNull)
+  @@index([professional_id, created_at])
+  @@index([status, expires_at])
+  @@map("aura_action_plans")
+}
+
+/// Expediente e preferências da clínica. professional_id nulo = configuração global,
+/// usada como fallback enquanto o profissional não tiver a sua própria linha.
+model ClinicSetting {
+  id                       String   @id @default(uuid()) @db.Uuid
+  professional_id          String?  @unique @db.Uuid
+  timezone                 String   @default("America/Sao_Paulo")
+  /// { "<dia 0=domingo>": [["HH:MM","HH:MM"], ...] }; dia ausente = fechado.
+  business_hours           Json     @default("{}")
+  slot_minutes             Int      @default(30)
+  default_duration_minutes Int      @default(60)
+  morning_hour             String   @default("09:00")
+  afternoon_hour           String   @default("14:00")
+  evening_hour             String   @default("18:00")
+  default_ddd              String?
+  created_at               DateTime @default(now()) @db.Timestamptz
+  updated_at               DateTime @updatedAt @db.Timestamptz
+  professional             User?    @relation(fields: [professional_id], references: [id], onDelete: Cascade)
+  @@map("clinic_settings")
 }

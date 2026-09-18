@@ -19,7 +19,8 @@ import { AlertsModule } from './modules/alerts/alerts.module';
 import { ProtocolsModule } from './modules/protocols/protocols.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CalendarModule } from './modules/calendar/calendar.module';
-@Module({ imports: [DatabaseModule, AuthModule, UsersModule, AiModule, ReportsModule, PatientsModule, IntakesModule, TreatmentsModule, SessionsModule, MetricsModule, CheckinsModule, AlertsModule, ProtocolsModule, NotificationsModule, CalendarModule],
+import { ActionsModule } from './modules/actions/actions.module';
+@Module({ imports: [DatabaseModule, AuthModule, UsersModule, AiModule, ActionsModule, ReportsModule, PatientsModule, IntakesModule, TreatmentsModule, SessionsModule, MetricsModule, CheckinsModule, AlertsModule, ProtocolsModule, NotificationsModule, CalendarModule],
   controllers: [PatientsCreateController, NotificationStreamController, HealthController],
   providers: [{ provide: APP_GUARD, useClass: AuthGuard }],
 })

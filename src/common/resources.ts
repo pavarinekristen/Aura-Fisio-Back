@@ -11,7 +11,7 @@ const deleted = { is_deleted: z.boolean().optional(), deleted_at: optionalDate }
 
 export const resources = {
   profiles: { route: 'profiles', model: 'profile', owner: 'user_id', patientWrite: true,
-    schema: z.object({ user_id: id, full_name: z.string().trim().min(1).max(200), phone: text, date_of_birth: optionalDate, avatar_url: text, intake_completed: z.boolean().optional() }).strict() },
+    schema: z.object({ user_id: id, full_name: z.string().trim().min(1).max(200), phone: text, cpf: z.string().regex(/^\d{11}$/, 'CPF deve conter 11 dígitos.').nullable().optional(), date_of_birth: optionalDate, avatar_url: text, intake_completed: z.boolean().optional() }).strict() },
   patient_intake: { route: 'intakes', model: 'patientIntake', owner: 'user_id', patientWrite: true, soft: true,
     schema: z.object({ user_id: id, chief_complaint: text, pain_location: text, pain_intensity: pain, pain_duration: text, pain_type: text, previous_treatments: text, surgeries: text, medications: text, medical_conditions: text, daily_activities: text, exercise_routine: text, goals: text, sleep_quality: text, stress_level: text, additional_notes: text, treatment_protocol: text, treatment_duration: text, intake_completed: z.boolean().optional(), ...deleted }).strict() },
   treatment_plans: { route: 'treatments', model: 'treatmentPlan', owner: 'patient_id', soft: true,
@@ -68,6 +68,7 @@ export function responseSchema(key: ResourceKey) {
       : { type: numeric ? 'number' : boolean ? 'boolean' : 'string', nullable: true };
   }
   if (key === 'profiles') properties.role = { type: 'string', enum: ['admin', 'professional', 'patient'] };
+  if (key === 'patient_intake') properties.updated_at = { type: 'string', format: 'date-time' };
   if (key === 'workout_checkins') properties.checked_at = { type: 'string', format: 'date-time' };
   if (key === 'patient_alerts') {
     properties.patient_id = { type: 'string' }; properties.professional_id = { type: 'string', nullable: true };

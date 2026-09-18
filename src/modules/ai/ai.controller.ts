@@ -9,7 +9,7 @@ import { aiInput } from './ai.schemas';
 export class AiController {
   constructor(@Inject(AiService) private ai: AiService) {}
   @Post('aura-chat')
-  @ApiBody({ schema: { type: 'object', properties: { patient_id: { type: 'string', format: 'uuid' }, mode: { type: 'string', enum: ['patient', 'professional', 'calendar'] }, messages: { type: 'array', items: { type: 'object', additionalProperties: true } }, message: { type: 'string' } } } })
+  @ApiBody({ schema: { type: 'object', properties: { patient_id: { type: 'string', format: 'uuid' }, selected_region: { type: 'object', properties: { id: { type: 'string' }, label: { type: 'string' } }, required: ['id', 'label'] }, selected_structure: { type: 'object', description: 'Seleção educativa do atlas; requer selected_region e não constitui registro clínico.', additionalProperties: false, properties: { id: { type: 'string' }, label: { type: 'string' } }, required: ['id', 'label'] }, mode: { type: 'string', enum: ['patient', 'professional', 'calendar'] }, messages: { type: 'array', items: { type: 'object', additionalProperties: true } }, message: { type: 'string' } } } })
   async chat(@Req() req: AuthRequest, @Body() raw: unknown, @Res() res: Response) {
     const input = aiInput.parse(raw);
     if (input.mode === 'professional') { res.json(await this.ai.professional(req.user, input)); return; }
